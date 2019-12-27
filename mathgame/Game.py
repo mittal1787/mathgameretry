@@ -7,6 +7,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
+from kivy.uix.floatlayout import FloatLayout 
 
 class MathGame(App):
     
@@ -58,22 +59,17 @@ class MathGame(App):
                  ["tan(x) + C", "4*tan^5(x) + C", "4/5 * tan^5(x) + C", "4/5 * sec^5(x) + C"])
                  ]
         self.group_list = []
-
-
-    # Create the manager
         self.sm = ScreenManager()
-
         self.screen_open = Screen()
         self.screen_open.add_widget(Label(text="Please put how many teams are there"))
-        text_int = TextInput(text="1",input_type="number", input_filter="int")
-        self.screen_open.add_widget(text_int)
+        self.text_int = TextInput(text="1",input_type="number", input_filter="int")
+        self.screen_open.add_widget(self.text_int)
         self.btn1 = Button(text="proceed")
-
         self.question_labels = []
         self.screens_q = []
 
         for i in range(10):
-            screen_q = Screen()
+            screen_q = FloatLayout()
             question = self.question_list[i]
             question_label = Label(text=question.get_text())
             self.question_labels.append(question_label)
@@ -81,7 +77,7 @@ class MathGame(App):
             screen_q.add_widget(Label(text=str(question.get_point_value())))
             self.screens_q.append(screen_q)
 
-        end_screen = Screen()
+        end_screen = FloatLayout()
         self.screens_q.append(end_screen)
         
         self.sm.switch_to(self.screen_open)
@@ -113,7 +109,7 @@ class MathGame(App):
         for i in range(int(self.text_int.text)):
             self.group_list.append(Group("A" + str(i), 0))
     
-        spinner = Spinner(
+        self.spinner = Spinner(
             text = self.group_list[0].name,
             values = tuple([group.name for group in self.group_list]),
             size_hint=(None, None),
@@ -121,7 +117,7 @@ class MathGame(App):
             pos_hint={'center_x': .5, 'center_y': .5})
     
         for i in range(len(self.screens_q)-1):
-            self.screens_q[i].add_widget(spinner)
+            self.screens_q[i].add_widget(self.spinner)
         
     
         for i in range(len(self.screens_q)-1):
