@@ -8,12 +8,9 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
 from kivy.uix.floatlayout import FloatLayout 
+from kivy.uix.relativelayout import RelativeLayout
 
-class MathGame(App):
-    
-    #Main initiative
-    def __init__(self):
-        self.question_list = [
+question_list = [
         Question(50, "What is two times the sum of a number and five?",
                  "2(x+5)", ["2(x+5)", "4x", "2x+5", "x+5"]),
         Question(100, """What is the solution to?
@@ -58,75 +55,81 @@ class MathGame(App):
         Question(500, "What is the integral of 4*sec^2(x)*tan^4(x)?", "4/5 * tan^5(x) + C",
                  ["tan(x) + C", "4*tan^5(x) + C", "4/5 * tan^5(x) + C", "4/5 * sec^5(x) + C"])
                  ]
-        self.group_list = []
-        self.sm = ScreenManager()
-        self.screen_open = Screen()
-        self.screen_open.add_widget(Label(text="Please put how many teams are there"))
-        self.text_int = TextInput(text="1",input_type="number", input_filter="int")
-        self.screen_open.add_widget(self.text_int)
-        self.btn1 = Button(text="proceed")
-        self.question_labels = []
-        self.screens_q = []
 
-        for i in range(10):
-            screen_q = FloatLayout()
-            question = self.question_list[i]
-            question_label = Label(text=question.get_text())
-            self.question_labels.append(question_label)
-            screen_q.add_widget(question_label)
-            screen_q.add_widget(Label(text=str(question.get_point_value())))
-            self.screens_q.append(screen_q)
+group_list = []
+question_screens = []
+sm = ScreenManager()
 
-        end_screen = FloatLayout()
-        self.screens_q.append(end_screen)
+
+class OpenScreen(Screen):
+    def __init__(self, **kwargs):
+        super(OpenScreen, self).__init__(**kwargs)
+        self.welcome = Label(text="welcome! Choose how many groups there are on the textbox and play the game!")
+        self.add_widget(self.welcome)
+        self.group_counter = TextInput(input_type="number",input_filter="int", text="")
+        self.add_widget(self.group_counter)
+        self.button = Button(text="Go!")
+        self.button.bind(on_release=self.get_questions)
         
-        self.sm.switch_to(self.screen_open)
-        self.btn1.bind(on_press=self.instantiate_buttons())
-        self.screen_open.add_widget(self.btn1)
+    def create_groups(self):
+        for i in range(int(self.group_counter.text)):
+            group_list.append(Group("A" + str(i), 0))
+            
+    def get_questions(self):
+        self.create_groups()
+        question_screens = [QuestionScreen(question) for question in question_list]
+        sm.switch_to(question_screens[0])
 
+class QuestionScreen(Screen):
+    def __init__(self, question, **kwargs):
+        super(QuestionScreen, self).__init__(**kwargs)
+        self.question = question
+        print(question)
+        self.question_text = Label(text=question.text)
+        self.add_widget(self.question_text)
+        self.group_spinner = Spinner(
+                text = group_list[0].name,
+                values = tuple([group.name for group in group_list]))
+        self.add_widget(self.group_spinner)
+        sm.add_widget(self)
+        self.answer_buttons = [Button(text=answer_choice, on_press=self.verify_answer(answer_choice)) for answer_choice in question.answer_choices]
     
-    #find group by name
-    def find_group_by_name(self, group_name):
-        for group in self.group_list:
-            if group_name == group.name:
-                return group
-
-    def click_answer(self, screen_1, text, group_name, screen_2):
-        if text == self.question_list[self.screens_q.index_of(screen_1)].answer:
-            group = self.find_group_by_name(group_name)
-            group.add_points(self.question_list[self.screens_q.index_of(screen_1)].point_value)
+    def verify_answer(self, answer):
+        group = self.get_group_by_name(self.group_spinner.text)
+        if answer == self.question.answer:
+            group.add_points(self.question.get_point_value())
         else:
-            group = self.find_group_by_name(group_name)
-            group.add_points(self.question_list[self.screens_q.index_of(screen_1)].point_value*-1)
-        for group in self.group_list:
-            screen_2.add_widget(Label(text=group.to_string()))
-        self.sm.switch_to(screen_2)
-
-
-
-
-    def instantiate_buttons(self):
-        for i in range(int(self.text_int.text)):
-            self.group_list.append(Group("A" + str(i), 0))
-    
-        self.spinner = Spinner(
-            text = self.group_list[0].name,
-            values = tuple([group.name for group in self.group_list]),
-            size_hint=(None, None),
-            size=(100, 44),
-            pos_hint={'center_x': .5, 'center_y': .5})
-    
-        for i in range(len(self.screens_q)-1):
-            self.screens_q[i].add_widget(self.spinner)
+            group.add_points(self.question.get_point_value()*-1)
+        if question_screens.index_of(self)+1 < len(question_list):
+            sm.switch_to(question_screens[question_screens.index_of(self)+1])
+        else:
+            self.end_screen = EndScreen()
+            sm.switch_to(self.end_screen)
         
     
-        for i in range(len(self.screens_q)-1):
-            for x in range(len(self.question_list[i].answer_choices)):
-                btn = Button(text=(self.question_list[i]).answer_choices[x],
-                          on_press=self.click_answer(self.screens_q[i], (self.question_list[i]).answer_choices[x], spinner.text, self.screens_q[i+1]))
-                self.screens_q[i].add_widget(btn)
-        self.sm.switch_to(self.screens_q[0])
+    def get_group_by_name(self, group_name):
+        for group in group_list:
+            if group.name == group_name:
+                return group
+            
+            
 
+class EndScreen(Screen):
+    def __init__(self, **kwargs):
+        super(EndScreen, self).__init__(**kwargs)
+        self.label = Label(text="Thank you for playing, here are the scores")
+        self.add_widget(self.label)
+        for group in group_list:
+            self.add_widget(Label(text=group.to_string()))
+        
+            
+        
+        
+        
+            
+    
+    
+    
 
         
 

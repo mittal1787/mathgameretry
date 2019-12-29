@@ -1,3 +1,3 @@
-from Game import MathGame
+from Game import OpenScreen, QuestionScreen
 
-game = MathGame()
+qs = OpenScreen()
