@@ -1,3 +1,5 @@
-from Game import OpenScreen, QuestionScreen
+from Game import MathGame
+from kivy.interactive import InteractiveLauncher
 
-qs = OpenScreen()
+launcher = InteractiveLauncher(MathGame())
+launcher.run()

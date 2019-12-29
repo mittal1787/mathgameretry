@@ -59,6 +59,7 @@ question_list = [
 group_list = []
 question_screens = []
 sm = ScreenManager()
+end_screen = []
 
 
 class OpenScreen(Screen):
@@ -103,8 +104,8 @@ class QuestionScreen(Screen):
         if question_screens.index_of(self)+1 < len(question_list):
             sm.switch_to(question_screens[question_screens.index_of(self)+1])
         else:
-            self.end_screen = EndScreen()
-            sm.switch_to(self.end_screen)
+            end_screen = EndScreen()
+            sm.switch_to(end_screen)
         
     
     def get_group_by_name(self, group_name):
@@ -122,6 +123,9 @@ class EndScreen(Screen):
         for group in group_list:
             self.add_widget(Label(text=group.to_string()))
         
+class MathGame(App):
+    def build(self):
+        return OpenScreen()         
             
         
         
